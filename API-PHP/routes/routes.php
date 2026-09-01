@@ -4,6 +4,10 @@ $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
 
+if (strpos($uri, '/index.php/') === 0) {
+    $uri = substr($uri, strlen('/index.php'));
+}
+
 if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
     $uri = substr($uri, strlen($scriptName));
     if ($uri === '') {

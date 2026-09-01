@@ -1,28 +1,12 @@
 #!/bin/bash
 set -e
 
-CONFIG_FILE="/home/site/default"
+if [ -f /home/site/wwwroot/nginx.conf ]; then
+    cp /home/site/wwwroot/nginx.conf /etc/nginx/sites-enabled/default
+elif [ -f /home/site/repository/nginx.conf ]; then
+    cp /home/site/repository/nginx.conf /etc/nginx/sites-enabled/default
+else
+    sed -i 's#try_files .*#try_files $uri $uri/ /index.php?$args;#' /etc/nginx/sites-enabled/default
+fi
 
-cp /etc/nginx/sites-enabled/default "$CONFIG_FILE"
-
-awk '
-    /location \/ \{/ { in_root_location = 1 }
-    in_root_location && /try_files/ {
-        print "        try_files $uri $uri/ /index.php?$args;";
-        replaced = 1;
-        in_root_location = 0;
-        next;
-    }
-    in_root_location && /^[[:space:]]*\}/ {
-        if (!replaced) {
-            print "        try_files $uri $uri/ /index.php?$args;";
-            replaced = 1;
-        }
-        in_root_location = 0;
-    }
-    { print }
-' "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
-mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-
-cp "$CONFIG_FILE" /etc/nginx/sites-enabled/default
 service nginx reload
