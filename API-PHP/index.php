@@ -15,4 +15,18 @@ require __DIR__ . '/controllers/CategoriaController.php';
 require __DIR__ . '/controllers/ProductoController.php';
 require __DIR__ . '/controllers/PedidoController.php';
 require __DIR__ . '/controllers/DetallePedidoController.php';
-require __DIR__ . '/routes/routes.php';
+
+try {
+    require __DIR__ . '/routes/routes.php';
+} catch (Throwable $exception) {
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+
+    $response = ['error' => 'Internal server error'];
+
+    if (filter_var(getenv('APP_DEBUG'), FILTER_VALIDATE_BOOLEAN)) {
+        $response['message'] = $exception->getMessage();
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+}

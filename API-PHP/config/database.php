@@ -5,6 +5,7 @@ $port = getenv('DB_PORT') ?: '5432';
 $dbname = getenv('DB_NAME') ?: 'mi_api';
 $user = getenv('DB_USER') ?: 'postgres';
 $password = getenv('DB_PASSWORD') ?: 'postgres';
+$sslmode = getenv('DB_SSLMODE') ?: (str_contains($host, '.postgres.database.azure.com') ? 'require' : 'prefer');
 
 function get_db_connection(): PDO
 {
@@ -19,9 +20,10 @@ function get_db_connection(): PDO
     $dbname = getenv('DB_NAME') ?: 'mi_api';
     $user = getenv('DB_USER') ?: 'postgres';
     $password = getenv('DB_PASSWORD') ?: 'postgres';
+    $sslmode = getenv('DB_SSLMODE') ?: (str_contains($host, '.postgres.database.azure.com') ? 'require' : 'prefer');
 
     $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname",
+        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=$sslmode",
         $user,
         $password,
         [
