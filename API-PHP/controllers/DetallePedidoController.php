@@ -35,7 +35,7 @@ class DetallePedidoController extends BaseController
         $precioUnitario = (float) $data['precio_unitario'];
         $subtotal = $cantidad * $precioUnitario;
 
-        $stmt = $this->db()->prepare('INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (:pedido_id, :producto_id, :cantidad, :precio_unitario, :subtotal) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (:pedido_id, :producto_id, :cantidad, :precio_unitario, :subtotal)');
         $stmt->execute([
             'pedido_id' => (int) $data['pedido_id'],
             'producto_id' => (int) $data['producto_id'],
@@ -43,11 +43,10 @@ class DetallePedidoController extends BaseController
             'precio_unitario' => $precioUnitario,
             'subtotal' => $subtotal,
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Detalle agregado',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

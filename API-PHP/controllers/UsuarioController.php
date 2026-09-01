@@ -31,18 +31,17 @@ class UsuarioController extends BaseController
             return;
         }
 
-        $stmt = $this->db()->prepare('INSERT INTO usuarios (rol_id, nombre, email, password) VALUES (:rol_id, :nombre, :email, :password) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO usuarios (rol_id, nombre, email, password) VALUES (:rol_id, :nombre, :email, :password)');
         $stmt->execute([
             'rol_id' => (int) $data['rol_id'],
             'nombre' => trim((string) $data['nombre']),
             'email' => trim((string) $data['email']),
             'password' => password_hash((string) $data['password'], PASSWORD_BCRYPT),
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Usuario creado',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

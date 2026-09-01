@@ -32,16 +32,15 @@ class RolController extends BaseController
             return;
         }
 
-        $stmt = $this->db()->prepare('INSERT INTO roles (nombre, descripcion) VALUES (:nombre, :descripcion) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO roles (nombre, descripcion) VALUES (:nombre, :descripcion)');
         $stmt->execute([
             'nombre' => $nombre,
             'descripcion' => $data['descripcion'] ?? null,
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Rol creado',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

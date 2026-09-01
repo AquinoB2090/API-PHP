@@ -32,16 +32,15 @@ class CategoriaController extends BaseController
             return;
         }
 
-        $stmt = $this->db()->prepare('INSERT INTO categorias (nombre, descripcion) VALUES (:nombre, :descripcion) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO categorias (nombre, descripcion) VALUES (:nombre, :descripcion)');
         $stmt->execute([
             'nombre' => $nombre,
             'descripcion' => $data['descripcion'] ?? null,
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Categoría creada',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

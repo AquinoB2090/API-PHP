@@ -31,7 +31,7 @@ class ProductoController extends BaseController
             return;
         }
 
-        $stmt = $this->db()->prepare('INSERT INTO productos (categoria_id, nombre, descripcion, precio, stock, estado) VALUES (:categoria_id, :nombre, :descripcion, :precio, :stock, :estado) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO productos (categoria_id, nombre, descripcion, precio, stock, estado) VALUES (:categoria_id, :nombre, :descripcion, :precio, :stock, :estado)');
         $stmt->execute([
             'categoria_id' => (int) $data['categoria_id'],
             'nombre' => trim((string) $data['nombre']),
@@ -40,11 +40,10 @@ class ProductoController extends BaseController
             'stock' => (int) ($data['stock'] ?? 0),
             'estado' => $data['estado'] ?? 'activo',
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Producto creado',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

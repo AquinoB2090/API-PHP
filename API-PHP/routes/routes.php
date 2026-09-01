@@ -21,6 +21,39 @@ $routes = [
         http_response_code(200);
         echo json_encode(['status' => 'ok']);
     }],
+    '/db-check' => ['controller' => null, 'action' => null, 'handler' => function () {
+        if (!filter_var(getenv('APP_DEBUG'), FILTER_VALIDATE_BOOLEAN)) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+            return;
+        }
+
+        $info = [
+            'driver' => 'sqlite',
+            'path' => sqlite_database_path(),
+        ];
+
+        try {
+            $pdo = get_db_connection();
+            $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
+
+            http_response_code(200);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status' => 'connected',
+                'config' => $info,
+                'tables' => $stmt->fetchAll(PDO::FETCH_COLUMN),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status' => 'failed',
+                'config' => $info,
+                'message' => $exception->getMessage(),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }
+    }],
     '/roles' => ['controller' => RolController::class, 'action' => 'index', 'methods' => ['GET', 'POST']],
     '/roles/' => ['controller' => RolController::class, 'action' => 'index', 'methods' => ['GET', 'POST']],
     '/usuarios' => ['controller' => UsuarioController::class, 'action' => 'index', 'methods' => ['GET', 'POST']],

@@ -31,18 +31,17 @@ class PedidoController extends BaseController
             return;
         }
 
-        $stmt = $this->db()->prepare('INSERT INTO pedidos (usuario_id, fecha, estado, total) VALUES (:usuario_id, :fecha, :estado, :total) RETURNING id');
+        $stmt = $this->db()->prepare('INSERT INTO pedidos (usuario_id, fecha, estado, total) VALUES (:usuario_id, :fecha, :estado, :total)');
         $stmt->execute([
             'usuario_id' => (int) $data['usuario_id'],
             'fecha' => $data['fecha'] ?? date('Y-m-d H:i:s'),
             'estado' => $data['estado'] ?? 'pendiente',
             'total' => (float) ($data['total'] ?? 0),
         ]);
-        $id = $stmt->fetchColumn();
 
         $this->json([
             'message' => 'Pedido creado',
-            'id' => (int) $id,
+            'id' => (int) $this->db()->lastInsertId(),
         ], 201);
     }
 

@@ -8,27 +8,7 @@ services:
       - "8080:80"
     volumes:
       - ./API-PHP:/var/www/html
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: mi_api
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: api-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: mi_api
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      - sqlite-data:/var/www/html/data
 
 volumes:
-  pgdata:
+  sqlite-data:
