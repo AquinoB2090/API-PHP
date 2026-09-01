@@ -9,8 +9,16 @@ awk '
     /location \/ \{/ { in_root_location = 1 }
     in_root_location && /try_files/ {
         print "        try_files $uri $uri/ /index.php?$args;";
+        replaced = 1;
         in_root_location = 0;
         next;
+    }
+    in_root_location && /^[[:space:]]*\}/ {
+        if (!replaced) {
+            print "        try_files $uri $uri/ /index.php?$args;";
+            replaced = 1;
+        }
+        in_root_location = 0;
     }
     { print }
 ' "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
