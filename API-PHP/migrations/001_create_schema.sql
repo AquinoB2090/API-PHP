@@ -61,3 +61,41 @@ INSERT OR IGNORE INTO roles (nombre, descripcion) VALUES
 INSERT OR IGNORE INTO categorias (nombre, descripcion) VALUES
 ('Tecnologia', 'Productos tecnologicos'),
 ('Hogar', 'Productos para el hogar');
+
+INSERT OR IGNORE INTO usuarios (rol_id, nombre, email, password)
+SELECT id, 'Cliente Demo', 'cliente.demo@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.'
+FROM roles
+WHERE nombre = 'cliente';
+
+INSERT INTO productos (categoria_id, nombre, descripcion, precio, stock, estado)
+SELECT id, 'Laptop Demo', 'Producto de ejemplo para pruebas', 799.99, 10, 'activo'
+FROM categorias
+WHERE nombre = 'Tecnologia'
+AND NOT EXISTS (
+    SELECT 1
+    FROM productos
+    WHERE productos.nombre = 'Laptop Demo'
+);
+
+INSERT INTO pedidos (usuario_id, estado, total)
+SELECT usuarios.id, 'pendiente', 799.99
+FROM usuarios
+WHERE usuarios.email = 'cliente.demo@example.com'
+AND NOT EXISTS (
+    SELECT 1
+    FROM pedidos
+    WHERE pedidos.usuario_id = usuarios.id
+);
+
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario, subtotal)
+SELECT pedidos.id, productos.id, 1, productos.precio, productos.precio
+FROM pedidos
+JOIN usuarios ON usuarios.id = pedidos.usuario_id
+JOIN productos ON productos.nombre = 'Laptop Demo'
+WHERE usuarios.email = 'cliente.demo@example.com'
+AND NOT EXISTS (
+    SELECT 1
+    FROM detalle_pedido
+    WHERE detalle_pedido.pedido_id = pedidos.id
+    AND detalle_pedido.producto_id = productos.id
+);
