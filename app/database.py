@@ -1,0 +1,66 @@
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any
+
+import oracledb
+
+from app.config import get_settings
+
+
+def make_dsn() -> str:
+    settings = get_settings()
+    return oracledb.makedsn(
+        settings.oracle_host,
+        settings.oracle_port,
+        service_name=settings.oracle_service_name,
+    )
+
+
+@contextmanager
+def get_connection() -> Iterator[oracledb.Connection]:
+    settings = get_settings()
+    connection = oracledb.connect(
+        user=settings.oracle_user,
+        password=settings.oracle_password,
+        dsn=make_dsn(),
+    )
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+
+def json_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return int(value) if value == value.to_integral_value() else float(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return value
+
+
+def rows_to_dicts(cursor: oracledb.Cursor) -> list[dict[str, Any]]:
+    columns = [column[0].lower() for column in cursor.description or []]
+    return [
+        {column: json_value(value) for column, value in zip(columns, row)}
+        for row in cursor.fetchall()
+    ]
+
+
+def fetch_all(sql: str, params: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params or {})
+            return rows_to_dicts(cursor)
+
+
+def fetch_one(sql: str, params: Mapping[str, Any] | None = None) -> dict[str, Any] | None:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params or {})
+            columns = [column[0].lower() for column in cursor.description or []]
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            return {column: json_value(value) for column, value in zip(columns, row)}
