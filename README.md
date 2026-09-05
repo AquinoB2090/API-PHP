@@ -35,6 +35,8 @@ http://localhost:8000/docs
 
 ## Endpoints
 
+El catalogo completo esta en `ENDPOINTS.md`.
+
 - `GET /api/clientes/top10?limit=10`
 - `GET /api/clientes/sin-compras?limit=50`
 - `GET /api/clientes/mayor-consumo`
@@ -58,13 +60,16 @@ ORACLE_PORT=1521
 ORACLE_SERVICE_NAME=FREEPDB1
 ORACLE_USER=DBA_COMPRAS
 ORACLE_PASSWORD=DBA_COMPRAS
+ORACLE_POOL_MIN=0
+ORACLE_POOL_MAX=2
+ORACLE_POOL_INCREMENT=1
 SCM_DO_BUILD_DURING_DEPLOYMENT=true
 ```
 
 Startup command sugerido en `Settings > Configuration > General settings`:
 
 ```bash
-python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+python -m gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
 ```
 
 Tambien puedes usar el script si Azure lo reconoce correctamente:

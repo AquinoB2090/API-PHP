@@ -8,6 +8,8 @@ import oracledb
 
 from app.config import get_settings
 
+_pool: oracledb.ConnectionPool | None = None
+
 
 def make_dsn() -> str:
     settings = get_settings()
@@ -18,18 +20,28 @@ def make_dsn() -> str:
     )
 
 
+def get_pool() -> oracledb.ConnectionPool:
+    global _pool
+    if _pool is None:
+        settings = get_settings()
+        _pool = oracledb.create_pool(
+            user=settings.oracle_user,
+            password=settings.oracle_password,
+            dsn=make_dsn(),
+            min=settings.oracle_pool_min,
+            max=settings.oracle_pool_max,
+            increment=settings.oracle_pool_increment,
+        )
+    return _pool
+
+
 @contextmanager
 def get_connection() -> Iterator[oracledb.Connection]:
-    settings = get_settings()
-    connection = oracledb.connect(
-        user=settings.oracle_user,
-        password=settings.oracle_password,
-        dsn=make_dsn(),
-    )
+    connection = get_pool().acquire()
     try:
         yield connection
     finally:
-        connection.close()
+        get_pool().release(connection)
 
 
 def json_value(value: Any) -> Any:

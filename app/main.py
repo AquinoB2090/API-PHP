@@ -11,6 +11,62 @@ from app.database import fetch_all, fetch_one
 Limit = Annotated[int, Query(ge=1, le=100)]
 Year = Annotated[int | None, Query(ge=1900, le=2100)]
 Month = Annotated[int | None, Query(ge=1, le=12)]
+Offset = Annotated[int, Query(ge=0, le=10000)]
+Search = Annotated[str | None, Query(min_length=1, max_length=100)]
+
+TABLES = {
+    "clientes": {
+        "table": "tbl_clientes",
+        "id": "id_cliente",
+        "order": "id_cliente",
+        "search": [
+            "carnet",
+            "primer_nombre",
+            "segundo_nombre",
+            "tercer_nombre",
+            "primer_apellido",
+            "segundo_apellido",
+            "correo",
+            "telefono",
+        ],
+    },
+    "marcas": {
+        "table": "tbl_marcas",
+        "id": "id_marca",
+        "order": "id_marca",
+        "search": ["nombre_marca"],
+    },
+    "tarjetas": {
+        "table": "tbl_tarjetas",
+        "id": "id_tarjeta",
+        "order": "id_tarjeta",
+        "search": ["numero_tarjeta", "tipo_tarjeta"],
+    },
+    "categorias": {
+        "table": "tbl_categorias",
+        "id": "id_categoria",
+        "order": "id_categoria",
+        "search": ["nombre_categoria"],
+    },
+    "productos": {
+        "table": "tbl_productos",
+        "id": "id_producto",
+        "order": "id_producto",
+        "search": ["nombre_producto"],
+    },
+    "compras": {
+        "table": "tbl_enc_compras",
+        "id": "id_compra",
+        "order": "id_compra",
+        "search": [],
+    },
+    "detalle-compras": {
+        "table": "tbl_det_compras",
+        "id": "id_detalle",
+        "order": "id_detalle",
+        "search": [],
+    },
+}
 
 app = FastAPI(title=get_settings().app_name, version="1.0.0")
 
@@ -37,19 +93,32 @@ def root():
         "message": "API RESTful de compras conectada a Oracle",
         "endpoints": {
             "clientes": [
+                "/api/clientes",
+                "/api/clientes/{id_cliente}",
                 "/api/clientes/top10",
                 "/api/clientes/sin-compras",
                 "/api/clientes/mayor-consumo",
             ],
+            "marcas": ["/api/marcas", "/api/marcas/{id_marca}"],
+            "tarjetas_crud": ["/api/tarjetas", "/api/tarjetas/{id_tarjeta}"],
+            "categorias": ["/api/categorias", "/api/categorias/{id_categoria}"],
             "productos": [
+                "/api/productos",
+                "/api/productos/{id_producto}",
                 "/api/productos/top10",
                 "/api/productos/sin-ventas",
                 "/api/productos/por-categoria",
             ],
             "compras": [
+                "/api/compras",
+                "/api/compras/{id_compra}",
                 "/api/compras/por-mes",
                 "/api/compras/por-anio",
                 "/api/compras/promedio",
+            ],
+            "detalle_compras": [
+                "/api/detalle-compras",
+                "/api/detalle-compras/{id_detalle}",
             ],
             "tarjetas": [
                 "/api/tarjetas/mas-utilizadas",
@@ -69,6 +138,116 @@ def health():
 def db_check():
     result = fetch_one("select 'connected' as status, sysdate as checked_at from dual")
     return result or {"status": "unknown"}
+
+
+def list_table(resource: str, limit: int, offset: int, q: str | None = None):
+    metadata = TABLES[resource]
+    params = {"limit": limit, "offset": offset}
+    where = ""
+
+    if q and metadata["search"]:
+        search_conditions = [
+            f"lower({column}) like '%' || lower(:q) || '%'"
+            for column in metadata["search"]
+        ]
+        where = f"where {' or '.join(search_conditions)}"
+        params["q"] = q
+
+    return fetch_all(
+        f"""
+        select *
+        from {metadata["table"]}
+        {where}
+        order by {metadata["order"]}
+        offset :offset rows fetch next :limit rows only
+        """,
+        params,
+    )
+
+
+def get_table_row(resource: str, row_id: int):
+    metadata = TABLES[resource]
+    row = fetch_one(
+        f"""
+        select *
+        from {metadata["table"]}
+        where {metadata["id"]} = :row_id
+        """,
+        {"row_id": row_id},
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Registro no encontrado.")
+    return row
+
+
+@app.get("/api/clientes")
+def clientes(limit: Limit = 50, offset: Offset = 0, q: Search = None):
+    return list_table("clientes", limit, offset, q)
+
+
+@app.get("/api/clientes/{id_cliente:int}")
+def cliente_por_id(id_cliente: int):
+    return get_table_row("clientes", id_cliente)
+
+
+@app.get("/api/marcas")
+def marcas(limit: Limit = 50, offset: Offset = 0, q: Search = None):
+    return list_table("marcas", limit, offset, q)
+
+
+@app.get("/api/marcas/{id_marca:int}")
+def marca_por_id(id_marca: int):
+    return get_table_row("marcas", id_marca)
+
+
+@app.get("/api/tarjetas")
+def tarjetas(limit: Limit = 50, offset: Offset = 0, q: Search = None):
+    return list_table("tarjetas", limit, offset, q)
+
+
+@app.get("/api/tarjetas/{id_tarjeta:int}")
+def tarjeta_por_id(id_tarjeta: int):
+    return get_table_row("tarjetas", id_tarjeta)
+
+
+@app.get("/api/categorias")
+def categorias(limit: Limit = 50, offset: Offset = 0, q: Search = None):
+    return list_table("categorias", limit, offset, q)
+
+
+@app.get("/api/categorias/{id_categoria:int}")
+def categoria_por_id(id_categoria: int):
+    return get_table_row("categorias", id_categoria)
+
+
+@app.get("/api/productos")
+def productos(limit: Limit = 50, offset: Offset = 0, q: Search = None):
+    return list_table("productos", limit, offset, q)
+
+
+@app.get("/api/productos/{id_producto:int}")
+def producto_por_id(id_producto: int):
+    return get_table_row("productos", id_producto)
+
+
+@app.get("/api/compras")
+def compras(limit: Limit = 50, offset: Offset = 0):
+    return list_table("compras", limit, offset)
+
+
+@app.get("/api/compras/{id_compra:int}")
+def compra_por_id(id_compra: int):
+    return get_table_row("compras", id_compra)
+
+
+@app.get("/api/detalle-compras")
+def detalle_compras(limit: Limit = 50, offset: Offset = 0):
+    return list_table("detalle-compras", limit, offset)
+
+
+@app.get("/api/detalle-compras/{id_detalle:int}")
+def detalle_compra_por_id(id_detalle: int):
+    return get_table_row("detalle-compras", id_detalle)
 
 
 @app.get("/api/clientes/top10")
