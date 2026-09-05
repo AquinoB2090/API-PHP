@@ -18,6 +18,8 @@ https://python-api-g2dnemg4ewana3bb.westus3-01.azurewebsites.net
 - `GET /db-check`
 - `GET /docs`
 
+`/health` solo valida que la API este encendida. `/db-check` y todos los endpoints `/api/...` necesitan que Oracle acepte conexiones.
+
 ## Tablas Principales
 
 Todos los listados aceptan:

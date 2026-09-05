@@ -10,7 +10,7 @@ class Settings(BaseModel):
     oracle_user: str = os.getenv("ORACLE_USER", "DBA_COMPRAS")
     oracle_password: str = os.getenv("ORACLE_PASSWORD", "DBA_COMPRAS")
     oracle_pool_min: int = int(os.getenv("ORACLE_POOL_MIN", "0"))
-    oracle_pool_max: int = int(os.getenv("ORACLE_POOL_MAX", "2"))
+    oracle_pool_max: int = int(os.getenv("ORACLE_POOL_MAX", "1"))
     oracle_pool_increment: int = int(os.getenv("ORACLE_POOL_INCREMENT", "1"))
     app_name: str = os.getenv("APP_NAME", "API Compras")
 
