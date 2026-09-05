@@ -64,11 +64,11 @@ SCM_DO_BUILD_DURING_DEPLOYMENT=true
 Startup command sugerido en `Settings > Configuration > General settings`:
 
 ```bash
-startup.sh
+python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
 ```
 
-Si Azure no ejecuta el script, usa este comando directo:
+Tambien puedes usar el script si Azure lo reconoce correctamente:
 
 ```bash
-python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:${PORT:-8000}
+startup.sh
 ```
