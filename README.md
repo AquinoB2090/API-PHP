@@ -50,8 +50,25 @@ http://localhost:8000/docs
 
 ## Azure App Service
 
-Startup command sugerido:
+Configura estas variables en `Settings > Environment variables`:
 
 ```bash
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+ORACLE_HOST=52.171.58.51
+ORACLE_PORT=1521
+ORACLE_SERVICE_NAME=FREEPDB1
+ORACLE_USER=DBA_COMPRAS
+ORACLE_PASSWORD=DBA_COMPRAS
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+```
+
+Startup command sugerido en `Settings > Configuration > General settings`:
+
+```bash
+startup.sh
+```
+
+Si Azure no ejecuta el script, usa este comando directo:
+
+```bash
+python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:${PORT:-8000}
 ```
